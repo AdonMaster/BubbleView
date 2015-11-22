@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
@@ -19,23 +22,29 @@ public class BubbleTextVew extends TextView {
     private float mArrowPosition;
     private int bubbleColor;
     private BubbleDrawable.ArrowLocation mArrowLocation;
-    public BubbleTextVew(Context context) {
+
+    public BubbleTextVew(Context context)
+    {
         super(context);
         initView(null);
     }
 
-    public BubbleTextVew(Context context, AttributeSet attrs) {
+    public BubbleTextVew(Context context, AttributeSet attrs)
+    {
         super(context, attrs);
         initView(attrs);
     }
 
-    public BubbleTextVew(Context context, AttributeSet attrs, int defStyle) {
+    public BubbleTextVew(Context context, AttributeSet attrs, int defStyle)
+    {
         super(context, attrs, defStyle);
         initView(attrs);
     }
 
-    private void initView(AttributeSet attrs){
-        if (attrs != null){
+    private void initView(AttributeSet attrs)
+    {
+        if (attrs != null)
+        {
             TypedArray array = getContext().obtainStyledAttributes(attrs, R.styleable.BubbleView);
             mArrowWidth = array.getDimension(R.styleable.BubbleView_arrowWidth,
                     BubbleDrawable.Builder.DEFAULT_ARROW_WITH);
@@ -55,40 +64,48 @@ public class BubbleTextVew extends TextView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+    {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    protected void onSizeChanged(int w, int h, int oldw, int oldh)
+    {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (w > 0 && h > 0){
+        if (w > 0 && h > 0)
+        {
             setUp(w, h);
         }
     }
 
     @Override
-    public void layout(int l, int t, int r, int b) {
+    public void layout(int l, int t, int r, int b)
+    {
         super.layout(l, t, r, b);
         setUp();
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(Canvas canvas)
+    {
         if (bubbleDrawable != null)
             bubbleDrawable.draw(canvas);
         super.onDraw(canvas);
     }
 
-    private void setUp(int width, int height){
-        setUp(0, width , 0, height);
+    private void setUp(int width, int height)
+    {
+        setUp(0, width, 0, height);
     }
 
-    private void setUp(){
+    private void setUp()
+    {
         setUp(getWidth(), getHeight());
     }
 
-    private void setUp(int left, int right, int top, int bottom){
+    private void setUp(int left, int right, int top, int bottom)
+    {
         RectF rectF = new RectF(left, top, right, bottom);
         bubbleDrawable = new BubbleDrawable.Builder()
                 .rect(rectF)
@@ -102,12 +119,14 @@ public class BubbleTextVew extends TextView {
                 .build();
     }
 
-    private void setUpPadding(){
+    private void setUpPadding()
+    {
         int left = getPaddingLeft();
         int right = getPaddingRight();
         int top = getPaddingTop();
         int bottom = getPaddingBottom();
-        switch (mArrowLocation){
+        switch (mArrowLocation)
+        {
             case LEFT:
                 left += mArrowWidth;
                 break;
@@ -124,4 +143,100 @@ public class BubbleTextVew extends TextView {
         setPadding(left, top, right, bottom);
     }
 
+    public void setBubbleColor(int color)
+    {
+        bubbleColor = color;
+
+        if (bubbleDrawable != null)
+        {
+            bubbleDrawable.setBubbleColor(color);
+
+            invalidate();
+        }
+    }
+
+
+    // # State manager
+
+    @Override
+    public Parcelable onSaveInstanceState()
+    {
+        Bundle bundle = new Bundle();
+
+        bundle.putParcelable(State.STATE, new State(super.onSaveInstanceState(), bubbleColor));
+
+        return bundle;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state)
+    {
+        // my bundle
+        if (state instanceof Bundle)
+        {
+            State s = ((Bundle) state).getParcelable(State.STATE);
+            assert (s != null);
+
+            bubbleColor = s.getBubbleColor();
+
+            super.onRestoreInstanceState(s.getSuperState());
+        }
+
+        // some extraordinary error to not be my bundle
+        else
+        {
+            super.onRestoreInstanceState(state);
+        }
+    }
+
+
+    // Class to hold state
+
+    static class State extends BaseSavedState {
+
+        protected static final String STATE = "BubbleTextView.Chatuba.STATE";
+
+        private int bubbleColor;
+
+        private State(Parcel in)
+        {
+            super(in);
+
+            bubbleColor = in.readInt();
+        }
+
+        public State(Parcelable parcelable, int bubbleColor)
+        {
+            super(parcelable);
+
+            this.bubbleColor = bubbleColor;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags)
+        {
+            super.writeToParcel(out, flags);
+
+            out.writeInt(bubbleColor);
+        }
+
+        public static final Parcelable.Creator<State> CREATOR = new Creator<State>() {
+            @Override
+            public State createFromParcel(Parcel in)
+            {
+                return new State(in);
+            }
+
+            @Override
+            public State[] newArray(int size)
+            {
+                return new State[size];
+            }
+        };
+
+        public int getBubbleColor()
+        {
+            return bubbleColor;
+        }
+    }
 }

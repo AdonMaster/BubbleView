@@ -324,4 +324,9 @@ public class BubbleDrawable extends Drawable {
         COLOR,
         BITMAP
     }
+
+    public void setBubbleColor(int bubbleColor)
+    {
+        this.bubbleColor = bubbleColor;
+    }
 }
